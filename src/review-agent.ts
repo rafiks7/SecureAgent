@@ -68,6 +68,7 @@ const filterFile = (file: PRFile) => {
     "tsconfig.json",
     "poetry.lock",
     "readme.md",
+    "what.file"
   ]);
   const filename = file.filename.toLowerCase().split("/").pop();
   if (filename && filesToIgnore.has(filename)) {
