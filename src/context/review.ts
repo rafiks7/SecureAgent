@@ -8,6 +8,9 @@ import {
 } from "../constants";
 import * as diff from "diff";
 import { JavascriptParser } from "./language/javascript-parser";
+import { PythonParser } from "./language/python-parser";
+import Parser from "tree-sitter";
+import { Node } from "@babel/traverse";
 
 const expandHunk = (
   contents: string,
@@ -229,7 +232,13 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
         lineEnd
       );
       const node = largestEnclosingFunction.enclosingContext;
-      console.log('type of Node: ', typeof(node))
+      
+      if (isBabelNode(node)) {
+        console.log("Babel Node");
+      }
+      else {
+        console.log("Python Node")
+      }
 
       if (largestEnclosingFunction) {
         let enclosingRangeKey = "";
@@ -308,7 +317,12 @@ const functionContextPatchStrategy = (
 export const smarterContextPatchStrategy = (file: PRFile) => {
   const parser: AbstractParser = getParserForExtension(file.filename);
   if (parser != null) {
-    console.info(`Using ${typeof(parser)}`);
+    if (parser instanceof PythonParser) {
+      console.log('Using PythonParser')
+    }
+    else if (parser instanceof JavascriptParser) {
+      console.log('Using JavaScriptParser')
+    }
     return functionContextPatchStrategy(file, parser);
   } else {
     console.info("Using basic parser");

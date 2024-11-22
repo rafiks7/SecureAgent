@@ -30,8 +30,8 @@ export class PythonParser implements AbstractParser {
     lineEnd: number
   ): EnclosingContext {
     // TODO: Implement this method for Python
-    const largestSize = 0;
-    const largestEnclosingContext: Parser.SyntaxNode = null;
+    let largestSize = 0;
+    let largestEnclosingContext: Parser.SyntaxNode = null;
 
     const ast = parser.parse(file);
     const rootNode = ast.rootNode;
@@ -39,7 +39,9 @@ export class PythonParser implements AbstractParser {
     const traverse = (node: Parser.SyntaxNode) => {
 
       if (node.type == "function_definition") {
-        processNode(node, lineStart, lineEnd, largestSize, largestEnclosingContext)
+        const result = processNode(node, lineStart, lineEnd, largestSize, largestEnclosingContext)
+        largestSize = result.largestSize;
+        largestEnclosingContext = result.largestEnclosingContext;
       }
 
       for (let i = 0; i < node.childCount; i++)

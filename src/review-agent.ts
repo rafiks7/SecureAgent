@@ -561,6 +561,7 @@ export const processPullRequest = async (
     const filteredInlineComments = inlineComments.filter(
       (comment) => comment !== null
     );
+    console.log('suggestions', filteredInlineComments)
     return {
       review: reviewComments,
       suggestions: filteredInlineComments,

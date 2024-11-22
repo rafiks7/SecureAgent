@@ -96,7 +96,7 @@ export const isBabelNode = (node: Node | Parser.SyntaxNode): node is Node  =>{
     return false;
   }
   
-  return (node as Node).type !== undefined;
+  return (node as Parser.SyntaxNode).childCount === undefined;
 }
 
 export interface EnclosingContext {
