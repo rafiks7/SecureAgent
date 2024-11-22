@@ -229,16 +229,17 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
         lineEnd
       );
       const node = largestEnclosingFunction.enclosingContext;
+      console.log('type of Node: ', typeof(node))
 
       if (largestEnclosingFunction) {
         let enclosingRangeKey = "";
         if (isBabelNode(node)) {
           enclosingRangeKey = `${node.loc.start.line} -> ${node.loc.end.line}`;
+          console.log('enclosed context rarnge for Babel Node: ', enclosingRangeKey)
         } else {
-          // Handle SyntaxNode (Tree-sitter) logic here
           enclosingRangeKey = `${node.startPosition.row} -> ${node.endPosition.row}`;
+          console.log('enclosed context rarnge for Python Node: ', enclosingRangeKey)
         }
-        console.info(`enclosed context range: ${enclosingRangeKey}`)
         let existingHunks = scopeRangeHunkMap.get(enclosingRangeKey) || [];
         existingHunks.push(hunk);
         scopeRangeHunkMap.set(enclosingRangeKey, existingHunks);
