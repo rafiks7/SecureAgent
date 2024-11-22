@@ -10,15 +10,6 @@ def complex_operation(a, b):
         if not isinstance(b, (int, float)):
             raise TypeError(f"Input 'b' must be a number. Received {type(b)}.")
 
-        # Addition
-        print(f"Attempting to add {a} and {b}...")
-        sum_result = a + b
-        print(f"Sum of {a} and {b}: {sum_result}")
-
-        # Subtraction
-        print(f"Attempting to subtract {b} from {a}...")
-        difference_result = a - b
-        print(f"Difference between {a} and {b}: {difference_result}")
 
         # Multiplication
         print(f"Attempting to multiply {a} and {b}...")
@@ -40,7 +31,7 @@ def complex_operation(a, b):
         print(f"Remainder when {a} is divided by {b}: {modulo_result}")
 
         # Return results as a tuple
-        print(f"Returning results for {a} and {b}: {sum_result}, {difference_result}, {product_result}, {quotient_result}, {modulo_result}")
+        print(f"Returning results for {a} and {b}: {product_result}, {quotient_result}, {modulo_result}")
         return sum_result, difference_result, product_result, quotient_result, modulo_result
 
     except TypeError as te:
