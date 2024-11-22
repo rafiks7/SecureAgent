@@ -116,10 +116,9 @@ const buildingScopeString = (
   let functionStartLine = 0;
   let functionEndLine = 0;
   if (isBabelNode(scope.enclosingContext)) {
-     functionStartLine = scope.enclosingContext.loc.start.line;
-     functionEndLine = scope.enclosingContext.loc.end.line;
-  }
-  else {
+    functionStartLine = scope.enclosingContext.loc.start.line;
+    functionEndLine = scope.enclosingContext.loc.end.line;
+  } else {
     functionStartLine = scope.enclosingContext.startPosition.row;
     functionEndLine = scope.enclosingContext.endPosition.row;
   }
@@ -214,6 +213,7 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
     });
   });
 
+  console.info("processing hunks");
   hunks.forEach((hunk, idx) => {
     try {
       const trimmedHunk = trimHunk(hunk);
@@ -222,21 +222,24 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
       ).length;
       const lineStart = trimmedHunk.newStart;
       const lineEnd = lineStart + insertions;
+      console.info(`searching for context for range: ${lineStart}-${lineEnd}`);
       const largestEnclosingFunction = parser.findEnclosingContext(
         updatedFile,
         lineStart,
         lineEnd
-      )
+      );
       const node = largestEnclosingFunction.enclosingContext;
 
       if (largestEnclosingFunction) {
-        let enclosingRangeKey = '';
+        let enclosingRangeKey = "";
         if (isBabelNode(node)) {
           enclosingRangeKey = `${node.loc.start.line} -> ${node.loc.end.line}`;
         } else {
           // Handle SyntaxNode (Tree-sitter) logic here
           enclosingRangeKey = `${node.startPosition.row} -> ${node.endPosition.row}`;
-        }        let existingHunks = scopeRangeHunkMap.get(enclosingRangeKey) || [];
+        }
+        console.info(`enclosed context range: ${enclosingRangeKey}`)
+        let existingHunks = scopeRangeHunkMap.get(enclosingRangeKey) || [];
         existingHunks.push(hunk);
         scopeRangeHunkMap.set(enclosingRangeKey, existingHunks);
         scopeRangeNodeMap.set(enclosingRangeKey, largestEnclosingFunction);
@@ -262,16 +265,22 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
   const contexts: string[] = [];
   scopeStategy.forEach(([rangeKey, hunk]) => {
     const enclosingContext = scopeRangeNodeMap.get(rangeKey);
-    const node = enclosingContext.enclosingContext
-    if (node && isBabelNode(node)){
-      const context = buildingScopeString(updatedFile, enclosingContext, hunk).join("\n");
-      contexts.push(context)
-    }
-    else if (node) {
-      const context = buildingScopeString(updatedFile, enclosingContext, hunk).join("\n");
+    const node = enclosingContext.enclosingContext;
+    if (node && isBabelNode(node)) {
+      const context = buildingScopeString(
+        updatedFile,
+        enclosingContext,
+        hunk
+      ).join("\n");
+      contexts.push(context);
+    } else if (node) {
+      const context = buildingScopeString(
+        updatedFile,
+        enclosingContext,
+        hunk
+      ).join("\n");
       contexts.push(context);
     }
-    
   });
   expandStrategy.forEach((hunk) => {
     const context = expandHunk(file.old_contents, hunk);
@@ -298,8 +307,10 @@ const functionContextPatchStrategy = (
 export const smarterContextPatchStrategy = (file: PRFile) => {
   const parser: AbstractParser = getParserForExtension(file.filename);
   if (parser != null) {
+    console.info(`Using ${parser}`);
     return functionContextPatchStrategy(file, parser);
   } else {
+    console.info("Using basic parser");
     return expandedPatchStrategy(file);
   }
 };

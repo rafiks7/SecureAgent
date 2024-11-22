@@ -92,6 +92,10 @@ export const processGitFilepath = (filepath: string) => {
 };
 
 export const isBabelNode = (node: Node | Parser.SyntaxNode): node is Node  =>{
+  if (node === null) {
+    return false;
+  }
+  
   return (node as Node).type !== undefined;
 }
 
