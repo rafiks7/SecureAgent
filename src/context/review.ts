@@ -1,12 +1,13 @@
 import {
   AbstractParser,
+  EnclosingContext,
   PRFile,
   PatchInfo,
   getParserForExtension,
+  isBabelNode,
 } from "../constants";
 import * as diff from "diff";
 import { JavascriptParser } from "./language/javascript-parser";
-import { Node } from "@babel/traverse";
 
 const expandHunk = (
   contents: string,
@@ -107,13 +108,21 @@ const trimHunk = (hunk: diff.Hunk): diff.Hunk => {
 
 const buildingScopeString = (
   currentFile: string,
-  scope: Node,
+  scope: EnclosingContext,
   hunk: diff.Hunk
 ) => {
   const res: string[] = [];
   const trimmedHunk = trimHunk(hunk);
-  const functionStartLine = scope.loc.start.line;
-  const functionEndLine = scope.loc.end.line;
+  let functionStartLine = 0;
+  let functionEndLine = 0;
+  if (isBabelNode(scope.enclosingContext)) {
+     functionStartLine = scope.enclosingContext.loc.start.line;
+     functionEndLine = scope.enclosingContext.loc.end.line;
+  }
+  else {
+    functionStartLine = scope.enclosingContext.startPosition.row;
+    functionEndLine = scope.enclosingContext.endPosition.row;
+  }
   const updatedFileLines = currentFile.split("\n");
   // Extract the lines of the function
   const functionContext = updatedFileLines.slice(
@@ -196,7 +205,7 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
   const hunks: diff.Hunk[] = [];
   const order: number[] = [];
   const scopeRangeHunkMap = new Map<string, diff.Hunk[]>();
-  const scopeRangeNodeMap = new Map<string, Node>();
+  const scopeRangeNodeMap = new Map<string, EnclosingContext>();
   const expandStrategy: diff.Hunk[] = [];
 
   patches.forEach((p) => {
@@ -217,11 +226,17 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
         updatedFile,
         lineStart,
         lineEnd
-      ).enclosingContext;
+      )
+      const node = largestEnclosingFunction.enclosingContext;
 
       if (largestEnclosingFunction) {
-        const enclosingRangeKey = `${largestEnclosingFunction.loc.start.line} -> ${largestEnclosingFunction.loc.end.line}`;
-        let existingHunks = scopeRangeHunkMap.get(enclosingRangeKey) || [];
+        let enclosingRangeKey = '';
+        if (isBabelNode(node)) {
+          enclosingRangeKey = `${node.loc.start.line} -> ${node.loc.end.line}`;
+        } else {
+          // Handle SyntaxNode (Tree-sitter) logic here
+          enclosingRangeKey = `${node.startPosition.row} -> ${node.endPosition.row}`;
+        }        let existingHunks = scopeRangeHunkMap.get(enclosingRangeKey) || [];
         existingHunks.push(hunk);
         scopeRangeHunkMap.set(enclosingRangeKey, existingHunks);
         scopeRangeNodeMap.set(enclosingRangeKey, largestEnclosingFunction);
@@ -246,12 +261,17 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
 
   const contexts: string[] = [];
   scopeStategy.forEach(([rangeKey, hunk]) => {
-    const context = buildingScopeString(
-      updatedFile,
-      scopeRangeNodeMap.get(rangeKey),
-      hunk
-    ).join("\n");
-    contexts.push(context);
+    const enclosingContext = scopeRangeNodeMap.get(rangeKey);
+    const node = enclosingContext.enclosingContext
+    if (node && isBabelNode(node)){
+      const context = buildingScopeString(updatedFile, enclosingContext, hunk).join("\n");
+      contexts.push(context)
+    }
+    else if (node) {
+      const context = buildingScopeString(updatedFile, enclosingContext, hunk).join("\n");
+      contexts.push(context);
+    }
+    
   });
   expandStrategy.forEach((hunk) => {
     const context = expandHunk(file.old_contents, hunk);
