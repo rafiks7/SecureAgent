@@ -13,7 +13,7 @@ const processNode = (
   if (start.line <= lineStart && lineEnd <= end.line) {
     const size = end.line - start.line;
     if (size > largestSize) {
-      largestSize = size;
+      largestSize = size + 5;
       largestEnclosingContext = path.node;
     }
   }
