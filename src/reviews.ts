@@ -44,6 +44,8 @@ const postInlineComment = async (
     }
     const suggestionBody = `${suggestion.comment}\n\`\`\`suggestion\n${suggestion.correction}`;
 
+    console.log('suggestionBody', suggestionBody)
+
     await octokit.request(
       "POST /repos/{owner}/{repo}/pulls/{pull_number}/comments",
       {
