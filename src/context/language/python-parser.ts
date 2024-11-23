@@ -29,7 +29,6 @@ export class PythonParser implements AbstractParser {
     lineStart: number,
     lineEnd: number
   ): EnclosingContext {
-    // TODO: Implement this method for Python
     let largestSize = 0;
     let largestEnclosingContext: Parser.SyntaxNode = null;
 
